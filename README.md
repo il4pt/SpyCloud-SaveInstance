@@ -19,7 +19,7 @@ synsaveinstance(Options)
 
 ## Progress GUI
 
-While saving, a progress card is shown at the top of the screen with the current stage, a progress bar and percentage:
+While saving, a small panel is shown in the bottom-left corner with the current stage, percentage, elapsed time and a progress bar. When the save finishes, the file path is printed to the executor console:
 
 | Stage | Range |
 |---|---|
