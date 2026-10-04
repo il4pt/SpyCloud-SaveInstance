@@ -30,6 +30,12 @@ While saving, a small panel is shown in the bottom-left corner with the current 
 
 Set `ShowStatus = false` in `Options` to hide it.
 
+On Potassium the console shows the full path on disk (`%LOCALAPPDATA%\Potassium\workspace\...`). On other executors, pass your workspace folder so the full path can be printed:
+
+```lua
+synsaveinstance({ WorkspacePath = "C:\\path\\to\\executor\\workspace" })
+```
+
 ## Credits & License
 
 This is a modified version of **UniversalSynSaveInstance https://discord.gg/wx4ThpAsmw** by the USSI contributors (<https://github.com/luau/UniversalSynSaveInstance>).

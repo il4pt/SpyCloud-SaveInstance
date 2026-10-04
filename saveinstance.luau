@@ -3569,6 +3569,7 @@ end
 --- .ExtraInstances {Instance} -- If used with any invalid mode (like "invalidmode") it will only save these instances. ___Default:___ {}
 --- @field IgnoreProperties table -- Ignores properties by Name. ___Default:___ {}
 --- @field SaveCacheInterval number -- The less the value the more often it saves, but that would mean less performance due to constantly saving. XML Only. ___Default:___ 0x1600 * 10
+--- @field WorkspacePath string -- Folder of the executor's workspace on disk, only used to print the full path of the saved file to the console. Detected automatically on Potassium. ___Default:___ false
 --- @field FilePath string -- The name (can include a path) of the file to save to. If it has no extension, `.rbxmx/rbxm` (models) or `.rbxlx/rbxl` (places) is appended; an existing extension is left as-is. Ignores `OPTIONS.AvoidFileOverwrite`. ___Default:___ false
 --- @field AvoidFileOverwrite boolean -- Prevents writing to place file that already exists. ___Default:___ true
 --- @field Object Instance -- * If provided, saves as .rbxmx (Model file) instead. If Object is game, it will be saved as a .rbxl file. **MUST BE AN INSTANCE REFERENCE, FOR EXAMPLE - *game.Workspace***. `"optimized"` mode is **NOT** supported with this option. If IsModel is set to false then Object specified here will be saved as a place file. ___Default:___ false
@@ -3708,6 +3709,7 @@ local function synsaveinstance(...)
 		Anonymous = false,
 		ReadMe = true,
 		FilePath = false,
+		WorkspacePath = false,
 		AvoidFileOverwrite = true,
 		Object = false,
 		IsModel = false,
@@ -6831,14 +6833,17 @@ local function synsaveinstance(...)
 		warn("Error found while saving:")
 		warn(err)
 	elseif savedTo then
-		print(
-			string.format(
-				"[SpyCloud] Kaydedildi -> workspace/%s  (%s, %.2f sn)",
-				savedTo,
-				get_size_format(),
-				elapse_t
-			)
-		)
+		-- writefile only knows paths relative to the workspace, so build the on-disk path ourselves
+		local root = OPTIONS.WorkspacePath
+		if not root and string_find(string.lower(tostring(EXECUTOR_NAME)), "potassium") then
+			root = "%LOCALAPPDATA%\\Potassium\\workspace"
+		end
+
+		local fullPath = root and (string.gsub(root, "[\\/]+$", "") .. "\\" .. string.gsub(savedTo, "/", "\\"))
+			or "workspace/" .. savedTo
+
+		print(string.format("[SpyCloud] Kaydedildi (%s, %.2f sn)", get_size_format(), elapse_t))
+		print("[SpyCloud] Dosya yolu: " .. fullPath)
 	end
 	if StatusText then
 		if LoadingThread then
