@@ -4087,6 +4087,7 @@ local function synsaveinstance(...)
 	local SharedBinaryStrings = OPTIONS.SharedBinaryStrings
 
 	local ToSaveList, ldecompile, placename, elapse_t, SaveNotCreatableWillBeEnabled, RecoveredScripts
+	local savedTo -- set once the file has been written
 
 	if OPTIONS.ReadMe then
 		RecoveredScripts = {}
@@ -5994,6 +5995,10 @@ local function synsaveinstance(...)
 				table.concat(chunks)
 			)
 		end
+
+		if not CopyToClipboard and not Callback and writefile then
+			savedTo = placename
+		end
 	end
 
 	local Connections = {}
@@ -6116,14 +6121,14 @@ local function synsaveinstance(...)
 		local TweenService = service.TweenService
 
 		local Theme = {
-			Background = Color3.fromRGB(22, 24, 31),
-			Track = Color3.fromRGB(42, 45, 56),
-			Accent = Color3.fromRGB(124, 140, 255),
-			AccentEnd = Color3.fromRGB(180, 130, 255),
-			Text = Color3.fromRGB(236, 238, 245),
-			SubText = Color3.fromRGB(150, 155, 172),
-			Success = Color3.fromRGB(110, 220, 150),
-			Error = Color3.fromRGB(255, 110, 120),
+			Background = Color3.fromRGB(16, 16, 18),
+			Border = Color3.fromRGB(44, 44, 50),
+			Track = Color3.fromRGB(34, 34, 38),
+			Bar = Color3.fromRGB(232, 232, 232),
+			Text = Color3.fromRGB(232, 232, 232),
+			Muted = Color3.fromRGB(120, 120, 128),
+			Success = Color3.fromRGB(96, 200, 128),
+			Error = Color3.fromRGB(226, 88, 88),
 		}
 
 		local function create(className, props, children)
@@ -6140,8 +6145,8 @@ local function synsaveinstance(...)
 		local function label(props)
 			local inst = create("TextLabel", {
 				BackgroundTransparency = 1,
-				Font = Enum.Font.Gotham,
-				TextColor3 = Theme.SubText,
+				Font = Enum.Font.RobotoMono,
+				TextColor3 = Theme.Muted,
 				TextSize = 12,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				TextTruncate = Enum.TextTruncate.AtEnd,
@@ -6152,110 +6157,101 @@ local function synsaveinstance(...)
 			return inst
 		end
 
-		local HiddenPosition, ShownPosition = UDim2.new(0.5, 0, 0, -150), UDim2.new(0.5, 0, 0, 24)
+		local PANEL_W, PANEL_H, PAD = 320, 72, 12
+		local ShownPosition = UDim2.new(0, 16, 1, -16)
+		local HiddenPosition = UDim2.new(0, 16, 1, PANEL_H + 16)
+
+		local TitleLabel = label({
+			Position = UDim2.fromOffset(PAD, 10),
+			Size = UDim2.new(1, -PAD * 2 - 50, 0, 14),
+			RichText = true,
+			TextColor3 = Theme.Text,
+			Text = '<b>spycloud</b> <font color="#78787f">saveinstance</font>',
+		})
+
+		local TimerLabel = label({
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -PAD, 0, 10),
+			Size = UDim2.fromOffset(50, 14),
+			TextXAlignment = Enum.TextXAlignment.Right,
+			Text = "00:00",
+		})
+
+		local StageLabel = label({
+			Position = UDim2.fromOffset(PAD, 30),
+			Size = UDim2.new(1, -PAD * 2 - 40, 0, 14),
+			TextColor3 = Theme.Text,
+			Text = "Başlatılıyor",
+		})
 
 		local PercentLabel = label({
 			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.fromScale(1, 0),
-			Size = UDim2.new(0, 60, 0, 18),
-			Font = Enum.Font.GothamBold,
-			TextSize = 15,
-			TextColor3 = Theme.Accent,
+			Position = UDim2.new(1, -PAD, 0, 30),
+			Size = UDim2.fromOffset(40, 14),
+			TextColor3 = Theme.Text,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			Text = "0%",
 		})
 
-		local StageLabel = label({
-			Position = UDim2.fromOffset(0, 22),
-			Size = UDim2.new(1, 0, 0, 16),
-			Font = Enum.Font.GothamMedium,
-			TextSize = 13,
-			Text = "Başlatılıyor",
-		})
-
-		local Gradient = create("UIGradient", {
-			Color = ColorSequence.new(Theme.Accent, Theme.AccentEnd),
+		StatusText = label({
+			Position = UDim2.fromOffset(PAD, 46),
+			Size = UDim2.new(1, -PAD * 2, 0, 12),
+			TextSize = 11,
+			Text = "discord.gg/spycloud",
 		})
 
 		local Fill = create("Frame", {
 			BorderSizePixel = 0,
-			BackgroundColor3 = Color3.new(1, 1, 1),
+			BackgroundColor3 = Theme.Bar,
 			Size = UDim2.fromScale(0, 1),
-		}, {
-			create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-			Gradient,
 		})
 
 		local Track = create("Frame", {
 			BorderSizePixel = 0,
 			BackgroundColor3 = Theme.Track,
-			Position = UDim2.fromOffset(0, 46),
-			Size = UDim2.new(1, 0, 0, 8),
-		}, {
-			create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-			Fill,
-		})
+			Position = UDim2.new(0, PAD, 1, -8),
+			Size = UDim2.new(1, -PAD * 2, 0, 2),
+		}, { Fill })
 
-		StatusText = label({
-			Position = UDim2.fromOffset(0, 62),
-			Size = UDim2.new(1, 0, 0, 14),
-			Text = "",
-		})
-
-		local Card = create("Frame", {
-			AnchorPoint = Vector2.new(0.5, 0),
+		local Panel = create("Frame", {
+			AnchorPoint = Vector2.new(0, 1),
 			Position = HiddenPosition,
-			Size = UDim2.fromOffset(340, 124),
+			Size = UDim2.fromOffset(PANEL_W, PANEL_H),
 			BackgroundColor3 = Theme.Background,
-			BackgroundTransparency = 0.08,
 			BorderSizePixel = 0,
 		}, {
-			create("UICorner", { CornerRadius = UDim.new(0, 14) }),
-			create("UIStroke", {
-				Color = Color3.new(1, 1, 1),
-				Transparency = 0.9,
-				Thickness = 1,
-			}),
-			create("UIPadding", {
-				PaddingTop = UDim.new(0, 14),
-				PaddingBottom = UDim.new(0, 14),
-				PaddingLeft = UDim.new(0, 16),
-				PaddingRight = UDim.new(0, 16),
-			}),
-			label({
-				Size = UDim2.new(1, -60, 0, 18),
-				Font = Enum.Font.GothamBold,
-				TextSize = 15,
-				TextColor3 = Theme.Text,
-				Text = "SpyCloud SaveInstance",
-			}),
-			PercentLabel,
+			create("UICorner", { CornerRadius = UDim.new(0, 4) }),
+			create("UIStroke", { Color = Theme.Border, Thickness = 1 }),
+			TitleLabel,
+			TimerLabel,
 			StageLabel,
-			Track,
+			PercentLabel,
 			StatusText,
-			label({
-				Position = UDim2.fromOffset(0, 82),
-				Size = UDim2.new(1, 0, 0, 14),
-				TextSize = 11,
-				TextColor3 = Theme.Accent,
-				TextTransparency = 0.2,
-				Text = "discord.gg/spycloud",
-			}),
+			Track,
 		})
 
-		Card.Parent = StatusGui
+		Panel.Parent = StatusGui
 
-		local function tween(inst, time, goal, style, direction)
+		local function tween(inst, time, goal, direction)
 			local t = TweenService:Create(
 				inst,
-				TweenInfo.new(time, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out),
+				TweenInfo.new(time, Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out),
 				goal
 			)
 			t:Play()
 			return t
 		end
 
-		tween(Card, 0.45, { Position = ShownPosition }, Enum.EasingStyle.Back)
+		tween(Panel, 0.2, { Position = ShownPosition })
+
+		local startedAt = os.clock()
+		local timerThread = task.spawn(function()
+			while Panel.Parent do
+				local s = math.floor(os.clock() - startedAt)
+				TimerLabel.Text = string.format("%02d:%02d", s // 60, s % 60)
+				task.wait(0.5)
+			end
+		end)
 
 		local shownProgress = 0
 
@@ -6269,24 +6265,25 @@ local function synsaveinstance(...)
 			end
 			shownProgress = fraction
 			PercentLabel.Text = math.floor(fraction * 100) .. "%"
-			tween(Fill, 0.25, { Size = UDim2.fromScale(fraction, 1) })
+			tween(Fill, 0.15, { Size = UDim2.fromScale(fraction, 1) })
 		end
 
 		FinishProgress = function(success, detail, hideAfter)
-			local color = success and Theme.Success or Theme.Error
+			task.cancel(timerThread)
 
+			local color = success and Theme.Success or Theme.Error
 			if success then
 				SetProgress(1)
 			end
-			StageLabel.Text = success and "Kaydedildi!" or "Başarısız!"
+			StageLabel.Text = success and "Kaydedildi" or "Başarısız"
 			StageLabel.TextColor3 = color
-			StatusText.Text = detail
 			PercentLabel.TextColor3 = color
-			Gradient.Enabled = false
 			Fill.BackgroundColor3 = color
+			StatusText.Text = detail
+			StatusText.TextColor3 = Theme.Text
 
 			task.delay(math.max(hideAfter, 3), function()
-				tween(Card, 0.35, { Position = HiddenPosition }, Enum.EasingStyle.Quad, Enum.EasingDirection.In).Completed:Wait()
+				tween(Panel, 0.2, { Position = HiddenPosition }, Enum.EasingDirection.In).Completed:Wait()
 				StatusGui:Destroy()
 			end)
 		end
@@ -6833,6 +6830,15 @@ local function synsaveinstance(...)
 	if not ok then
 		warn("Error found while saving:")
 		warn(err)
+	elseif savedTo then
+		print(
+			string.format(
+				"[SpyCloud] Kaydedildi -> workspace/%s  (%s, %.2f sn)",
+				savedTo,
+				get_size_format(),
+				elapse_t
+			)
+		)
 	end
 	if StatusText then
 		if LoadingThread then
@@ -6840,13 +6846,9 @@ local function synsaveinstance(...)
 			LoadingThread = nil
 		end
 		if ok then
-			FinishProgress(
-				true,
-				string.format("Süre %.2f sn  •  Boyut %s", elapse_t, get_size_format()),
-				Log10 * 2 + ExtraTime
-			)
+			FinishProgress(true, savedTo and "workspace/" .. savedTo or get_size_format(), Log10 * 2 + ExtraTime)
 		else
-			FinishProgress(false, "Ayrıntılar için F9 konsoluna bak", Log10 + ExtraTime)
+			FinishProgress(false, "Hata, ayrıntılar konsolda", Log10 + ExtraTime)
 		end
 	end
 
